@@ -269,11 +269,11 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
         st.metric("Top Sections", results['statistics']['sections_included'])
 
     with col4:
-        st.metric("Processing Time", ".2f")
+        st.metric("Processing Time", f"{results['metadata']['processing_time_seconds']:.2f}s")
 
     # Statistics details
     with st.expander("📈 Detailed Statistics", expanded=False):
-        stats_df = pd.DataFrame({
+        stats_data = {
             'Metric': [
                 'Total Sections Found',
                 'Sections Included',
@@ -284,15 +284,16 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
                 'Min Relevance Score'
             ],
             'Value': [
-                results['statistics']['total_sections_found'],
-                results['statistics']['sections_included'],
-                results['statistics']['subsections_included'],
-                results['statistics']['total_words_analyzed'],
-                f"{results['statistics']['average_relevance_score']:.3f}",
-                f"{results['statistics']['max_relevance_score']:.3f}",
-                f"{results['statistics']['min_relevance_score']:.3f}"
+                int(results['statistics']['total_sections_found']),
+                int(results['statistics']['sections_included']),
+                int(results['statistics']['subsections_included']),
+                int(results['statistics']['total_words_analyzed']),
+                float(results['statistics']['average_relevance_score']),
+                float(results['statistics']['max_relevance_score']),
+                float(results['statistics']['min_relevance_score'])
             ]
-        })
+        }
+        stats_df = pd.DataFrame(stats_data)
         st.dataframe(stats_df, use_container_width=True)
 
     # Search and filter controls
@@ -350,48 +351,62 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
     elif sort_by == "Page Number":
         filtered_sections.sort(key=lambda x: x['page_number'])
 
-    # Display sections
-    st.markdown('<div class="section-header">📋 Top Ranked Sections</div>', unsafe_allow_html=True)
+    # Display sections with integrated detailed analysis
+    st.markdown('<div class="section-header">📋 Analysis Results</div>', unsafe_allow_html=True)
 
     if not filtered_sections:
         st.warning("No sections match your current filters. Try adjusting the search terms or minimum score.")
     else:
         st.info(f"Showing {len(filtered_sections)} sections (filtered from {len(sections)} total)")
 
+        # Create mapping of sections to their detailed analysis
+        section_to_details = {}
+        if results.get('subsection_analysis'):
+            for subsection in results['subsection_analysis']:
+                key = f"{subsection['source_section']}_{subsection['document']}"
+                section_to_details[key] = subsection
+
         for i, section in enumerate(filtered_sections):
+            section_key = f"{section['section_title']}_{section['document']}"
+
             with st.container():
-                st.markdown(f"""
-                <div class="result-card">
-                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
-                        <h4 style="margin: 0; color: #1f77b4;">{i+1}. {section['section_title']}</h4>
-                        <span class="relevance-score">Score: {section['relevance_score']:.3f}</span>
-                    </div>
-                    <div style="color: #666; font-size: 0.9rem; margin-bottom: 0.5rem;">
-                        📄 {section['document']} | 📍 Page {section['page_number']} | 📝 {section['word_count']} words
-                    </div>
-                    <div style="color: #495057; line-height: 1.5;">
-                        {section.get('content', 'No content available')[:300]}{'...' if len(section.get('content', '')) > 300 else ''}
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
+                # Main section header with expand/collapse for details
+                with st.expander(f"**{i+1}. {section['section_title']}** — Score: {section['relevance_score']:.3f}", expanded=False):
+                    # Basic section info
+                    col1, col2 = st.columns([3, 1])
+                    with col1:
+                        st.markdown(f"**📄 Document:** {section['document']}")
+                        st.markdown(f"**📍 Page:** {section['page_number']}")
+                        st.markdown(f"**📝 Words:** {section['word_count']}")
+                    with col2:
+                        st.metric("Relevance Score", f"{section['relevance_score']:.3f}")
 
-                # Expand button for full content
-                if len(section.get('content', '')) > 300:
-                    with st.expander("Read full content"):
-                        st.write(section.get('content', ''))
+                    st.markdown("---")
 
-    # Subsections
-    if results.get('subsection_analysis'):
-        st.markdown('<div class="section-header">📖 Detailed Analysis</div>', unsafe_allow_html=True)
+                    # Section content preview
+                    content = section.get('content', 'No content available')
+                    if len(content) > 500:
+                        st.markdown("**Content Preview:**")
+                        st.write(content[:500] + "...")
+                        with st.expander("Read full section content"):
+                            st.write(content)
+                    else:
+                        st.markdown("**Content:**")
+                        st.write(content)
 
-        for subsection in results['subsection_analysis']:
-            with st.expander(f"📄 {subsection['source_section']} - {subsection['document']}"):
-                st.markdown(f"""
-                **Document:** {subsection['document']}  
-                **Page:** {subsection['page_number']}  
-                **Text Length:** {subsection['text_length']} characters
-                """)
-                st.write(subsection['refined_text'])
+                    # Detailed analysis for this section (if available)
+                    if section_key in section_to_details:
+                        st.markdown("---")
+                        st.markdown("### 🔍 Detailed Analysis")
+                        detail = section_to_details[section_key]
+                        st.markdown(f"""
+                        **Enhanced Analysis:**
+                        - **Text Length:** {detail['text_length']} characters
+                        - **Analysis Type:** AI-powered refinement
+                        """)
+                        st.write(detail['refined_text'])
+                    else:
+                        st.info("💡 No detailed analysis available for this section.")
 
     # Export options
     st.markdown('<div class="section-header">💾 Export Results</div>', unsafe_allow_html=True)
