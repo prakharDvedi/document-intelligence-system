@@ -296,68 +296,18 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
         stats_df = pd.DataFrame(stats_data)
         st.dataframe(stats_df, use_container_width=True)
 
-    # Search and filter controls
-    st.markdown('<div class="section-header">🔍 Search & Filter Results</div>', unsafe_allow_html=True)
-
-    col1, col2, col3 = st.columns([2, 1, 1])
-
-    with col1:
-        search_term = st.text_input(
-            "Search in sections",
-            placeholder="Enter keywords to search...",
-            help="Search within section titles and content"
-        )
-
-    with col2:
-        min_score = st.slider(
-            "Min Relevance Score",
-            min_value=0.0,
-            max_value=1.0,
-            value=0.0,
-            step=0.1,
-            format="%.1f"
-        )
-
-    with col3:
-        sort_by = st.selectbox(
-            "Sort by",
-            ["Relevance Score", "Document", "Page Number"],
-            index=0
-        )
-
-    # Filter and display sections
-    sections = results['extracted_sections']
-
-    # Apply filters
-    filtered_sections = []
-    for section in sections:
-        # Search filter
-        if search_term:
-            search_text = f"{section['section_title']} {section.get('content', '')}".lower()
-            if search_term.lower() not in search_text:
-                continue
-
-        # Score filter
-        if section['relevance_score'] < min_score:
-            continue
-
-        filtered_sections.append(section)
-
-    # Sort sections
-    if sort_by == "Relevance Score":
-        filtered_sections.sort(key=lambda x: x['relevance_score'], reverse=True)
-    elif sort_by == "Document":
-        filtered_sections.sort(key=lambda x: x['document'])
-    elif sort_by == "Page Number":
-        filtered_sections.sort(key=lambda x: x['page_number'])
-
     # Display sections with integrated detailed analysis
     st.markdown('<div class="section-header">📋 Analysis Results</div>', unsafe_allow_html=True)
 
-    if not filtered_sections:
-        st.warning("No sections match your current filters. Try adjusting the search terms or minimum score.")
+    sections = results['extracted_sections']
+
+    if not sections:
+        st.warning("No sections were extracted from the documents.")
     else:
-        st.info(f"Showing {len(filtered_sections)} sections (filtered from {len(sections)} total)")
+        st.info(f"Found {len(sections)} relevant sections")
+
+        # Sort sections by relevance score (highest first)
+        sections.sort(key=lambda x: x['relevance_score'], reverse=True)
 
         # Create mapping of sections to their detailed analysis
         section_to_details = {}
@@ -366,7 +316,7 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
                 key = f"{subsection['source_section']}_{subsection['document']}"
                 section_to_details[key] = subsection
 
-        for i, section in enumerate(filtered_sections):
+        for i, section in enumerate(sections):
             section_key = f"{section['section_title']}_{section['document']}"
 
             with st.container():
@@ -380,19 +330,6 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
                         st.markdown(f"**📝 Words:** {section['word_count']}")
                     with col2:
                         st.metric("Relevance Score", f"{section['relevance_score']:.3f}")
-
-                    st.markdown("---")
-
-                    # Section content preview
-                    content = section.get('content', 'No content available')
-                    if len(content) > 500:
-                        st.markdown("**Content Preview:**")
-                        st.write(content[:500] + "...")
-                        with st.expander("Read full section content"):
-                            st.write(content)
-                    else:
-                        st.markdown("**Content:**")
-                        st.write(content)
 
                     # Detailed analysis for this section (if available)
                     if section_key in section_to_details:
