@@ -67,7 +67,7 @@ def create_ground_truth_template():
     with open('ground_truth_template.json', 'w') as f:
         json.dump(template, f, indent=2)
 
-    print("📄 Ground Truth Template Created!")
+    print("Ground Truth Template Created!")
     print("File: ground_truth_template.json")
     print("\n" + "="*60)
     print("GROUND TRUTH FORMAT EXPLANATION")

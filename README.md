@@ -18,7 +18,7 @@ A powerful AI-powered document analysis tool built with Streamlit that extracts,
 - Python 3.8+
 - Tesseract OCR (for scanned PDFs)
 
-### Setup
+### Local Development Setup
 
 1. **Clone the repository**
    ```bash
@@ -35,6 +35,22 @@ A powerful AI-powered document analysis tool built with Streamlit that extracts,
    - **Windows**: Download from [GitHub releases](https://github.com/UB-Mannheim/tesseract/wiki)
    - **macOS**: `brew install tesseract`
    - **Linux**: `sudo apt-get install tesseract-ocr`
+
+### 🚀 Deployment
+
+#### Streamlit Cloud Deployment
+The repository is configured for easy deployment on Streamlit Cloud:
+
+1. **Fork this repository** on GitHub
+2. **Go to [Streamlit Cloud](https://streamlit.io/cloud)**
+3. **Connect your GitHub account** and select the forked repository
+4. **Deploy** - Streamlit Cloud will automatically install dependencies and run the app
+
+#### Manual Deployment
+For other platforms, ensure you have:
+- `packages.txt` for system dependencies
+- `runtime.txt` for Python version specification
+- All files in `.gitignore` are excluded from deployment
 
 ## 🎯 Usage
 

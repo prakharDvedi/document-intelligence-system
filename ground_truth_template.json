@@ -1,0 +1,48 @@
+{
+  "metadata": {
+    "collection_name": "Collection 1",
+    "persona": "Data Analyst",
+    "job_to_be_done": "Analyze quarterly sales reports and extract key performance metrics",
+    "document_count": 3,
+    "input_documents": [
+      "South of France - Cities.pdf",
+      "South of France - Cuisine.pdf",
+      "South of France - History.pdf"
+    ]
+  },
+  "extracted_sections": [
+    {
+      "section_title": "Sales Performance Q1 2024",
+      "document": "quarterly_report.pdf",
+      "page_number": 1,
+      "word_count": 245,
+      "relevance_score": 0.95,
+      "content": "Q1 sales showed a 15% increase compared to last year..."
+    },
+    {
+      "section_title": "Key Performance Indicators",
+      "document": "kpi_dashboard.pdf",
+      "page_number": 2,
+      "word_count": 180,
+      "relevance_score": 0.87,
+      "content": "Customer acquisition cost decreased by 12%..."
+    },
+    {
+      "section_title": "Market Analysis",
+      "document": "market_report.pdf",
+      "page_number": 3,
+      "word_count": 320,
+      "relevance_score": 0.76,
+      "content": "Market share increased to 23% in the target segment..."
+    }
+  ],
+  "statistics": {
+    "total_sections_found": 15,
+    "sections_included": 10,
+    "subsections_included": 5,
+    "total_words_analyzed": 2500,
+    "average_relevance_score": 0.73,
+    "max_relevance_score": 0.95,
+    "min_relevance_score": 0.45
+  }
+}
