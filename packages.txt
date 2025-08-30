@@ -1,19 +1,15 @@
+# Core system libraries for PyMuPDF and GUI applications
 libglib2.0-0
 libsm6
 libxext6
 libxrender-dev
 libgomp1
-libgthread-2.0-0
 libgtk-3-0
 libgdk-pixbuf2.0-0
 libcairo-gobject2
 libpango-1.0-0
 libatk1.0-0
 libcairo2
-libgdk-pixbuf2.0-0
-libgtk-3-0
-libglib2.0-0
-libgomp1
 libnss3
 libatk-bridge2.0-0
 libdrm2
@@ -24,3 +20,6 @@ libxrandr2
 libgbm1
 libxss1
 libasound2
+# Tesseract OCR dependencies
+tesseract-ocr
+tesseract-ocr-eng
