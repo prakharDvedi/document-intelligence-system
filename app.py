@@ -14,15 +14,12 @@ from src.persona_analyzer import PersonaAnalyzer
 from src.relevance_scorer import RelevanceScorer
 from src.output_formatter import OutputFormatter
 
-# Configure page
 st.set_page_config(
     page_title="Document Intelligence System",
-    page_icon="📄",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for better UI
 st.markdown("""
 <style>
     .main-header {
@@ -73,18 +70,15 @@ class StreamlitDocumentIntelligenceSystem:
         """Process uploaded PDF files and return analysis results"""
         start_time = time.time()
 
-        # Create temporary directory for uploaded files
         with tempfile.TemporaryDirectory() as temp_dir:
             pdf_paths = []
 
-            # Save uploaded files to temp directory
             for uploaded_file in uploaded_files:
                 file_path = os.path.join(temp_dir, uploaded_file.name)
                 with open(file_path, "wb") as f:
                     f.write(uploaded_file.getbuffer())
                 pdf_paths.append(file_path)
 
-            # Load and process documents
             documents = []
             for pdf_path in pdf_paths:
                 doc_data = self.doc_processor._load_single_pdf(pdf_path)
@@ -94,7 +88,6 @@ class StreamlitDocumentIntelligenceSystem:
             if not documents:
                 raise ValueError("No valid PDF documents found")
 
-            # Extract sections
             all_sections = []
             for doc in documents:
                 sections = self.doc_processor.extract_sections(doc)
@@ -103,19 +96,15 @@ class StreamlitDocumentIntelligenceSystem:
             if not all_sections:
                 raise ValueError("No sections could be extracted from the documents")
 
-            # Analyze persona and job requirements
             persona_context = self.persona_analyzer.analyze_persona(
                 {'role': persona_role},
                 {'task': job_task}
             )
 
-            # Score and rank sections
             ranked_sections = self.relevance_scorer.score_sections(all_sections, persona_context)
 
-            # Extract subsections
             subsections = self.doc_processor.extract_subsections(ranked_sections[:10])
 
-            # Format output
             input_config = {
                 'persona': {'role': persona_role},
                 'job_to_be_done': {'task': job_task},
@@ -129,18 +118,15 @@ class StreamlitDocumentIntelligenceSystem:
             return output_data
 
 def main():
-    st.markdown('<div class="main-header">📄 Document Intelligence System</div>', unsafe_allow_html=True)
+    st.markdown('<div class="main-header">Document Intelligence System</div>', unsafe_allow_html=True)
     st.markdown("---")
 
-    # Initialize system
     system = StreamlitDocumentIntelligenceSystem()
 
-    # Sidebar for inputs
     with st.sidebar:
-        st.header("🔧 Configuration")
+        st.header("Configuration")
 
-        # File upload
-        st.subheader("📁 Upload PDF Documents")
+        st.subheader("Upload PDF Documents")
         uploaded_files = st.file_uploader(
             "Select PDF files",
             type=["pdf"],
@@ -150,8 +136,7 @@ def main():
 
         st.markdown("---")
 
-        # Persona and task inputs
-        st.subheader("👤 Analysis Configuration")
+        st.subheader("Analysis Configuration")
 
         persona_role = st.selectbox(
             "Select Persona Role",
@@ -183,9 +168,8 @@ def main():
             help="Be specific about what information you're looking for"
         )
 
-        # Processing options
         st.markdown("---")
-        st.subheader("⚙️ Processing Options")
+        st.subheader("Processing Options")
 
         max_sections = st.slider(
             "Maximum Sections to Display",
@@ -195,54 +179,47 @@ def main():
             help="Limit the number of top-ranked sections shown"
         )
 
-        # Process button
         process_button = st.button(
-            "🚀 Analyze Documents",
+            "Analyze Documents",
             type="primary",
             use_container_width=True,
             disabled=not (uploaded_files and persona_role and job_task)
         )
 
-    # Main content area
     if not uploaded_files:
-        # Welcome screen
         col1, col2, col3 = st.columns([1, 2, 1])
 
         with col2:
-            st.markdown("### Welcome to Document Intelligence! 🎉")
+            st.markdown("### Welcome to Document Intelligence!")
             st.markdown("""
             This powerful tool helps you:
 
-            🔍 **Extract relevant sections** from PDF documents
-            📊 **Rank content by importance** based on your needs
-            🎯 **Focus on what matters** with persona-driven analysis
-            📈 **Get structured insights** with detailed statistics
+            - Extract relevant sections from PDF documents
+            - Rank content by importance based on your needs
+            - Focus on what matters with persona-driven analysis
+            - Get structured insights with detailed statistics
 
-            **Get started by:**
+            Get started by:
             1. Upload your PDF documents in the sidebar
             2. Select your role and describe your analysis goal
-            3. Click "Analyze Documents" to see the magic happen!
+            3. Click "Analyze Documents" to see the results!
             """)
 
-            st.info("💡 **Tip:** Upload multiple related documents for better analysis results!")
+            st.info("Tip: Upload multiple related documents for better analysis results!")
 
     elif process_button:
         try:
-            with st.spinner("🔄 Processing documents... This may take a few moments."):
-                # Update output formatter with user preferences
+            with st.spinner("Processing documents... This may take a few moments."):
                 system.output_formatter.max_sections = max_sections
 
-                # Process documents
                 results = system.process_documents(uploaded_files, persona_role, job_task)
 
-            # Display results
             display_results(results, uploaded_files)
 
         except Exception as e:
-            st.error(f"❌ Error processing documents: {str(e)}")
+            st.error(f"Error processing documents: {str(e)}")
             st.exception(e)
 
-    # Footer
     st.markdown("---")
     st.markdown(
         '<div style="text-align: center; color: #666; font-size: 0.8rem;">'
@@ -254,8 +231,7 @@ def main():
 def display_results(results: Dict[str, Any], uploaded_files: List):
     """Display analysis results in an organized manner"""
 
-    # Summary metrics
-    st.markdown('<div class="section-header">📊 Analysis Summary</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Analysis Summary</div>', unsafe_allow_html=True)
 
     col1, col2, col3, col4 = st.columns(4)
 
@@ -271,8 +247,7 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
     with col4:
         st.metric("Processing Time", f"{results['metadata']['processing_time_seconds']:.2f}s")
 
-    # Statistics details
-    with st.expander("📈 Detailed Statistics", expanded=False):
+    with st.expander("Detailed Statistics", expanded=False):
         stats_data = {
             'Metric': [
                 'Total Sections Found',
@@ -296,8 +271,7 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
         stats_df = pd.DataFrame(stats_data)
         st.dataframe(stats_df, use_container_width=True)
 
-    # Display sections with integrated detailed analysis
-    st.markdown('<div class="section-header">📋 Analysis Results</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Analysis Results</div>', unsafe_allow_html=True)
 
     sections = results['extracted_sections']
 
@@ -306,10 +280,8 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
     else:
         st.info(f"Found {len(sections)} relevant sections")
 
-        # Sort sections by relevance score (highest first)
         sections.sort(key=lambda x: x['relevance_score'], reverse=True)
 
-        # Create mapping of sections to their detailed analysis
         section_to_details = {}
         if results.get('subsection_analysis'):
             for subsection in results['subsection_analysis']:
@@ -320,21 +292,18 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
             section_key = f"{section['section_title']}_{section['document']}"
 
             with st.container():
-                # Main section header with expand/collapse for details
                 with st.expander(f"**{i+1}. {section['section_title']}** — Score: {section['relevance_score']:.3f}", expanded=False):
-                    # Basic section info
                     col1, col2 = st.columns([3, 1])
                     with col1:
-                        st.markdown(f"**📄 Document:** {section['document']}")
-                        st.markdown(f"**📍 Page:** {section['page_number']}")
-                        st.markdown(f"**📝 Words:** {section['word_count']}")
+                        st.markdown(f"**Document:** {section['document']}")
+                        st.markdown(f"**Page:** {section['page_number']}")
+                        st.markdown(f"**Words:** {section['word_count']}")
                     with col2:
                         st.metric("Relevance Score", f"{section['relevance_score']:.3f}")
 
-                    # Detailed analysis for this section (if available)
                     if section_key in section_to_details:
                         st.markdown("---")
-                        st.markdown("### 🔍 Detailed Analysis")
+                        st.markdown("### Detailed Analysis")
                         detail = section_to_details[section_key]
                         st.markdown(f"""
                         **Enhanced Analysis:**
@@ -343,18 +312,16 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
                         """)
                         st.write(detail['refined_text'])
                     else:
-                        st.info("💡 No detailed analysis available for this section.")
+                        st.info("No detailed analysis available for this section.")
 
-    # Export options
-    st.markdown('<div class="section-header">💾 Export Results</div>', unsafe_allow_html=True)
+    st.markdown('<div class="section-header">Export Results</div>', unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        # JSON export
         json_data = json.dumps(results, indent=2)
         st.download_button(
-            label="📄 Download JSON",
+            label="Download JSON",
             data=json_data,
             file_name=f"document_analysis_{int(time.time())}.json",
             mime="application/json",
@@ -362,12 +329,11 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
         )
 
     with col2:
-        # CSV export for sections
         if sections:
             sections_df = pd.DataFrame(sections)
             csv_data = sections_df.to_csv(index=False)
             st.download_button(
-                label="📊 Download Sections CSV",
+                label="Download Sections CSV",
                 data=csv_data,
                 file_name=f"sections_analysis_{int(time.time())}.csv",
                 mime="text/csv",
@@ -375,29 +341,28 @@ def display_results(results: Dict[str, Any], uploaded_files: List):
             )
 
     with col3:
-        # Summary text export
         summary_text = f"""
-Document Intelligence Analysis Report
-=====================================
+        Document Intelligence Analysis Report
+        =====================================
 
-Analysis Configuration:
-- Persona: {results['metadata']['persona']}
-- Task: {results['metadata']['job_to_be_done']}
-- Documents: {', '.join(results['metadata']['input_documents'])}
-- Processing Time: {results['metadata']['processing_time_seconds']:.2f} seconds
+        Analysis Configuration:
+        - Persona: {results['metadata']['persona']}
+        - Task: {results['metadata']['job_to_be_done']}
+        - Documents: {', '.join(results['metadata']['input_documents'])}
+        - Processing Time: {results['metadata']['processing_time_seconds']:.2f} seconds
 
-Summary Statistics:
-- Total Sections Found: {results['statistics']['total_sections_found']}
-- Sections Included: {results['statistics']['sections_included']}
-- Average Relevance Score: {results['statistics']['average_relevance_score']:.3f}
+        Summary Statistics:
+        - Total Sections Found: {results['statistics']['total_sections_found']}
+        - Sections Included: {results['statistics']['sections_included']}
+        - Average Relevance Score: {results['statistics']['average_relevance_score']:.3f}
 
-Top 5 Sections:
-"""
+        Top 5 Sections:
+        """
         for i, section in enumerate(sections[:5]):
             summary_text += f"\n{i+1}. {section['section_title'][:50]}... (Score: {section['relevance_score']:.3f})"
 
         st.download_button(
-            label="📝 Download Summary",
+            label="Download Summary",
             data=summary_text,
             file_name=f"analysis_summary_{int(time.time())}.txt",
             mime="text/plain",
