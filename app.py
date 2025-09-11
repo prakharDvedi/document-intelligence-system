@@ -126,13 +126,22 @@ def main():
     with st.sidebar:
         st.header("Configuration")
 
-        st.subheader("Upload PDF Documents")
-        uploaded_files = st.file_uploader(
-            "Select PDF files",
-            type=["pdf"],
-            accept_multiple_files=True,
-            help="Upload one or more PDF documents to analyze"
+        use_demo = st.checkbox(
+            "Use Demo Data from Collection 2",
+            help="Load pre-processed demo data instead of uploading PDFs"
         )
+
+        if not use_demo:
+            st.subheader("Upload PDF Documents")
+            uploaded_files = st.file_uploader(
+                "Select PDF files",
+                type=["pdf"],
+                accept_multiple_files=True,
+                help="Upload one or more PDF documents to analyze"
+            )
+        else:
+            uploaded_files = None
+            st.info("Demo mode selected. Demo data from Collection 3 will be used.")
 
         st.markdown("---")
 
@@ -183,10 +192,10 @@ def main():
             "Analyze Documents",
             type="primary",
             use_container_width=True,
-            disabled=not (uploaded_files and persona_role and job_task)
+            disabled=not ((uploaded_files or use_demo) and persona_role and job_task)
         )
 
-    if not uploaded_files:
+    if not (uploaded_files or use_demo):
         col1, col2, col3 = st.columns([1, 2, 1])
 
         with col2:
@@ -207,12 +216,56 @@ def main():
 
             st.info("Tip: Upload multiple related documents for better analysis results!")
 
-    elif process_button:
-        try:
-            with st.spinner("Processing documents... This may take a few moments."):
-                system.output_formatter.max_sections = max_sections
+    if use_demo:
+        st.markdown('<div class="section-header">Demo Documents Preview</div>', unsafe_allow_html=True)
+        with open("ground_truth_collection_2.json", "r") as f:
+            demo_data = json.load(f)
+        st.markdown("**Available Demo PDFs:**")
+        for doc in demo_data['metadata']['input_documents']:
+            st.markdown(f"- {doc}")
+        st.info("Select your persona and task, then click 'Analyze Documents' to explore the demo data.")
 
-                results = system.process_documents(uploaded_files, persona_role, job_task)
+    if process_button:
+        try:
+            if use_demo:
+                with st.spinner("Loading demo data..."):
+                    with open("ground_truth_collection_2.json", "r") as f:
+                        results = json.load(f)
+                    # Add missing fields for compatibility
+                    results['metadata']['document_count'] = len(results['metadata']['input_documents'])
+                    results['metadata']['processing_time_seconds'] = 1.23  # Dummy value for demo
+                    sections = results['extracted_sections']
+                    for section in sections:
+                        if 'word_count' not in section:
+                            section['word_count'] = len(section['section_title'].split())  # Estimate word count
+                    for i, subsection in enumerate(results.get('subsection_analysis', [])):
+                        # Map subsections to their corresponding section titles for collection 2
+                        if subsection['document'] == "Learn Acrobat - Fill and Sign.pdf":
+                            if i == 0 or i == 2:  # First and third subsections
+                                subsection['source_section'] = "Change flat forms to fillable (Acrobat Pro)"
+                            elif i == 1 or i == 3:  # Second and fourth
+                                subsection['source_section'] = "Fill and sign PDF forms"
+                        elif subsection['document'] == "Learn Acrobat - Request e-signatures_1.pdf":
+                            subsection['source_section'] = "Send a document to get signatures from others"
+                        else:
+                            subsection['source_section'] = subsection['document'].replace('.pdf', '')
+                        subsection['text_length'] = len(subsection['refined_text'])
+                    results['statistics'] = {
+                        'total_sections_found': len(sections),
+                        'sections_included': len(sections),
+                        'subsections_included': len(results.get('subsection_analysis', [])),
+                        'total_words_analyzed': sum(s['word_count'] for s in sections),
+                        'average_relevance_score': sum(s['relevance_score'] for s in sections) / len(sections) if sections else 0,
+                        'max_relevance_score': max(s['relevance_score'] for s in sections) if sections else 0,
+                        'min_relevance_score': min(s['relevance_score'] for s in sections) if sections else 0
+                    }
+                    # Create dummy uploaded_files for display
+                    uploaded_files = [type('obj', (object,), {'name': doc})() for doc in results['metadata']['input_documents']]
+            else:
+                with st.spinner("Processing documents... This may take a few moments."):
+                    system.output_formatter.max_sections = max_sections
+
+                    results = system.process_documents(uploaded_files, persona_role, job_task)
 
             display_results(results, uploaded_files)
 
